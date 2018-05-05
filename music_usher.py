@@ -19,6 +19,7 @@ import os
 import shutil
 
 from mutagen.easyid3 import EasyID3
+from mutagen.id3 import ID3NoHeaderError
 
 
 LOGGER = logging.getLogger(__name__)
@@ -164,8 +165,13 @@ class Track:
     def __init__(self, path):
         LOGGER.debug('Initialising track: %s', path)
         self.path = path
-        self.type = os.path.splitext(path)[1]
-        self.metadata = EasyID3(self.path)
+        trunk, self.type = os.path.splitext(path)
+
+        try:
+            self.metadata = EasyID3(self.path)
+        except ID3NoHeaderError:
+            self.metadata = {'title': os.path.basename(trunk)}
+            LOGGER.exception('File %s has no ID3 tag', path)
 
     def get_path(self):
         '''Returns the file system path to the source file.'''
@@ -175,7 +181,7 @@ class Track:
     def get_type(self):
         '''Returns the audio file type (eg mp3).'''
 
-        return self.type
+        return self.type or 'mp3'
 
     def get_album(self):
         return self._get_metadata('album') or 'Unknown Album'
@@ -192,7 +198,7 @@ class Track:
         track_number = self._get_metadata('tracknumber')
         if track_number:
             return re.sub(r'/\d+$', '', track_number) # We don't want total tracks counter
-        return  '0'    # Would None make sense here?
+        return  ''    # Would None make sense here?
 
     def _get_metadata(self, name):
         '''Get the associated file's metadata (eg title, artist).'''
@@ -208,7 +214,10 @@ class Track:
         LOGGER.debug('Exporting %s to %s', self, path)
         track_no = self.get_track_number()
         track_title = self.get_title()
-        filename = '{0}. {1}'.format(track_no, track_title)
+        if track_no:
+            filename = '{0}. {1}.{2}'.format(track_no, track_title, self.get_type())
+        else:
+            filename = '{0}.{1}'.format(track_title, self.get_type())
         export_path = os.path.join(path, filename)
         if not DRY_RUN:
             if MOVE_EXPORT:
