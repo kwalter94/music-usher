@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 '''Organise music/audio files libraries.
 
 This script takes in a directory of audio files and copies/moves
