@@ -166,6 +166,7 @@ class Track:
         LOGGER.debug('Initialising track: %s', path)
         self.path = path
         trunk, self.type = os.path.splitext(path)
+        self.type = self.type[1:]   # Truncate leading .
 
         try:
             self.metadata = EasyID3(self.path)
