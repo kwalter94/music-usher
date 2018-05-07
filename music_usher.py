@@ -30,6 +30,16 @@ DRY_RUN = False
 MOVE_EXPORT = False     # Move files in export else just copy them
 
 
+def normalise_filename(filename):
+    '''Replaces all invalid filename characters with ' - '
+
+    Example:
+        normalise_filename('\\foo/bar') -> '-foo-bar'
+
+    Invalid character set: \\/<>:"|?*'    
+    '''
+    return re.sub(r'[\\/<>:"|?*]', ' - ', filename).strip()
+
 class Library:
 
     def __init__(self, path, autoload=True):
@@ -111,7 +121,7 @@ class Discography:
         Where Artist is the name of this discography.
         '''
         LOGGER.debug('Exporting %s to %s', self, path)
-        export_path = os.path.join(path, self.artist)
+        export_path = os.path.join(path, normalise_filename(self.artist))
         if not os.path.isdir(export_path):
             LOGGER.debug('Creating discography directory: %s', export_path)
             if not DRY_RUN: os.makedirs(export_path)
@@ -146,7 +156,7 @@ class Album:
         '''Export album to given path.'''
 
         LOGGER.debug('Exporting %s to %s', self, path)
-        export_path = os.path.join(path, self.name)
+        export_path = os.path.join(path, normalise_filename(self.name))
         if not os.path.isdir(export_path):
             LOGGER.debug('Creating album directory: %s', export_path)
             if not DRY_RUN: os.makedirs(export_path)
@@ -219,7 +229,7 @@ class Track:
             filename = '{0}. {1}.{2}'.format(track_no, track_title, self.get_type())
         else:
             filename = '{0}.{1}'.format(track_title, self.get_type())
-        export_path = os.path.join(path, filename)
+        export_path = os.path.join(path, normalise_filename(filename))
         if not DRY_RUN:
             if MOVE_EXPORT:
                 LOGGER.debug('Moving %s to %s', self.path, export_path)
